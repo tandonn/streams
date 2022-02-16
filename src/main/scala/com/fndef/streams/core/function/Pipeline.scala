@@ -1,29 +1,71 @@
 package com.fndef.streams.core.function
 
-import com.fndef.streams.core._
-import com.fndef.streams.core.common.{Error, Expired, Ready, WindowSpec, WindowType}
+import com.fndef.streams.PipelineSpec
+import com.fndef.streams.core.{EventInternal, PipelineSink, PipelineSource, Startable, StreamFunction, StreamSink}
+import com.fndef.streams.core.store.{IndexedStreamStore, StreamStore}
 
-class Pipeline(val name: String, windowType: WindowType, windowSpec: WindowSpec) extends StreamFunction {
-  var windowFunction: WindowFunction = WindowFunction(windowSpec, sinks)
+trait Pipeline extends PipelineSource with PipelineSink with Startable
 
-  override def processEvent(event: EventInternal)(implicit context: ProcessingContext): EventInternal = {
-    windowFunction = windowType.winState match {
-      case Ready =>
-        windowFunction
-      case Expired | Error =>
-        windowFunction.toFn.clearSinks
-        WindowFunction(windowSpec, sinks)
+class WindowedPipeline(spec: PipelineSpec) extends Pipeline {
+  val name: String = s"${spec.pipelineName}"
+  private[this] val streamStore: StreamStore = createStreamStore(pipelineFunctions)
+
+  override def startup: Boolean = {
+    println("starting pipeline")
+    streamStore.startup
+  }
+
+  override def shutdown: Boolean = {
+    println(s"shutting down ${name}")
+    streamStore.shutdown
+  }
+
+  override def isActive: Boolean = streamStore.isActive
+
+  private def createStreamStore(pipelineFunctions: StreamSink): StreamStore = {
+    new IndexedStreamStore(s"${spec.pipelineName}-store", spec.windowSpec, pipelineFunctions)
+  }
+
+  private def pipelineFunctions: StreamFunction = {
+    registerPipelineFunctions(createFilter, createGrouping, createHavingFilter, createSelect, createToFunction)
+  }
+
+  private def createGrouping: GroupFunction = {
+    new GroupFunction(s"${spec.pipelineName}-grouping", spec)
+  }
+
+  private def createSelect: SelectFunction = {
+    new SelectFunction(s"${spec.pipelineName}-select", spec)
+  }
+
+  private def createHavingFilter: FilterFunction = {
+    new FilterFunction(s"${spec.pipelineName}-having", spec.having)
+  }
+
+  private def createFilter: FilterFunction = {
+    new FilterFunction(s"${spec.pipelineName}-filter", spec.filters)
+  }
+
+  private def createToFunction: ToFunction = {
+    new ToFunction(s"${spec.pipelineName}-to", this)
+  }
+
+  private def registerPipelineFunctions(streamFn: StreamFunction*): StreamFunction = {
+    def register(fn: Seq[StreamFunction]): StreamFunction = {
+      fn match {
+        case source +: sink +: tail =>
+          source.registerSink(sink)
+          register(sink +: tail)
+          source
+        case sink +: tail =>
+          sink
+      }
     }
-    windowFunction.windowOp(event)
+    streamFn.foreach(s => println(s"input fn = ${s.name}"))
+    val s = register(streamFn)
+    println(s"root of sinks = ${s.name}")
+    s
   }
 
-  override def registerSink(streamSink: StreamSink): StreamSource = {
-    windowFunction.toFn.registerSink(streamSink)
-    super.registerSink(streamSink)
-  }
-
-  override def deregisterSink(streamSink: StreamSink): StreamSource = {
-    windowFunction.toFn.deregisterSink(streamSink)
-    super.deregisterSink(streamSink)
-  }
+  def process(event: EventInternal): Unit = streamStore.addEvent(event)
 }

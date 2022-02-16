@@ -1,14 +1,19 @@
 package com.fndef.streams.core
 
-sealed trait EventType
+import java.time.LocalDateTime
+
+trait EventType
 case object DataEventType extends EventType
 case object ConfigUpdateType extends EventType
 case object AdminEventType extends EventType
+case object FrameStartEventType extends EventType
+case object FrameEndEventType extends EventType
 
 final class Event(val eventAttributes: Seq[EventAttribute]) {
   require(eventAttributes.nonEmpty && eventAttributes.count(_ == null) == 0, "Event has missing or null attributes")
 
   final val eventType: EventType = DataEventType
+  final val eventTime: LocalDateTime = LocalDateTime.now()
 
   override def equals(obj: Any): Boolean = {
     obj match {
@@ -29,7 +34,7 @@ object Event {
   }
 }
 
-protected[core] class EventInternal(val eventType: EventType, private val eventAttributes: Map[String, EventAttribute]) {
+class EventInternal(val eventType: EventType, val eventTime: LocalDateTime, private val eventAttributes: Map[String, EventAttribute]) {
   require(Option(eventType).nonEmpty, "Event type is required")
   require(Option(eventAttributes).nonEmpty && eventAttributes.nonEmpty && eventAttributes.count(_ == null) == 0, "Event attributes are required and should not be null")
 
@@ -66,15 +71,15 @@ protected[core] class EventInternal(val eventType: EventType, private val eventA
 }
 
 object EventInternal {
-  def apply(event: Event): EventInternal = new EventInternal(event.eventType, event.eventAttributes.map(e => (e.name, e)).toMap)
+  def apply(event: Event): EventInternal = new EventInternal(event.eventType, event.eventTime, event.eventAttributes.map(e => (e.name, e)).toMap)
 
-  def apply(eventType: EventType, eventAttributes: Seq[EventAttribute]): EventInternal = {
+  def apply(eventType: EventType, eventTime: LocalDateTime, eventAttributes: Seq[EventAttribute]): EventInternal = {
     require(Option(eventAttributes).nonEmpty && eventAttributes.nonEmpty && eventAttributes.count(_ == null) == 0, "Event attributes are required and should not be null")
-    new EventInternal(eventType, eventAttributes.map(e => (e.name, e)).toMap)
+    new EventInternal(eventType, eventTime, eventAttributes.map(e => (e.name, e)).toMap)
   }
 
-  def apply(eventAttributes: Seq[EventAttribute]): EventInternal = {
+  def apply(eventTime: LocalDateTime, eventAttributes: Seq[EventAttribute]): EventInternal = {
     require(Option(eventAttributes).nonEmpty && eventAttributes.nonEmpty && eventAttributes.count(_ == null) == 0, "Event attributes are required and should not be null")
-    new EventInternal(DataEventType, eventAttributes.map(e => (e.name, e)).toMap)
+    new EventInternal(DataEventType, eventTime, eventAttributes.map(e => (e.name, e)).toMap)
   }
 }
