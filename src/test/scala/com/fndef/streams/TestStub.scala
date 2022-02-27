@@ -1,7 +1,8 @@
 package com.fndef.streams
 
-import com.fndef.streams.core.common.{AndFilter, AttributeOp, LessThanEqual, NotEqualFilter}
-import com.fndef.streams.core.{EventAttribute, EventInternal}
+import java.time.{Duration, LocalDateTime}
+
+import com.fndef.streams.core.{EventAttribute, EventInternal, PipelineSink}
 
 object TestStub {
   def main(args: Array[String]): Unit = {
@@ -9,14 +10,32 @@ object TestStub {
     println("ok...")
 
     val pipeline = create("teststream")
-      .select("a2", "a3", "max(a3)", "count(a1)", "sum(a2)", "max(a2)", "min(a2)", "avg(a2)")
-      .filter(AndFilter(LessThanEqual("count(a1)", "lit(1)"), NotEqualFilter("a1", "lit(a1val1)"))) // lit() does literal value comparision
-      .groupBy("a1")
+      .windowBy(windowOf(Duration.ofMillis(1000)))
+      .select("id", "name", "dept", "count(name)", "max(id)")
+      .literals(lit(5), lit("test").as("hello-test"))
+      // .strictGrouping(true)
+      .filter(filterOf("name").equalTo(lit("james")))
+      .having(filterOf("count(name)").greaterThanEqual(lit(2)))
+      .groupBy("name", "dept")
       .start
 
-    import com.fndef.streams.core.Implicits._
-    pipeline.processEvent(EventInternal(Seq(EventAttribute("a1", "a1val1"), EventAttribute("a2", 7.3), EventAttribute("a3", "a33"))))
-    pipeline.processEvent(EventInternal(Seq(EventAttribute("a1", "a1val2"), EventAttribute("a2", 3.2), EventAttribute("a3", "a32"))))
-    pipeline.processEvent(EventInternal(Seq(EventAttribute("a1", "a1val1"), EventAttribute("a2", 7.2), EventAttribute("a3", "a31"))))
+    pipeline.registerSink(new PipelineSink {
+      override def process(data: EventInternal): Unit = {
+        println(s"downstream :: received event : ${data}")
+      }
+    });
+
+    pipeline.process(EventInternal(LocalDateTime.now(), Seq(EventAttribute("seqNo", "1"), EventAttribute("id", 1), EventAttribute("name", "james"), EventAttribute("dept", "abc"))))
+    pipeline.process(EventInternal(LocalDateTime.now(), Seq(EventAttribute("seqNo", "2"), EventAttribute("id", 2), EventAttribute("name", "joe"), EventAttribute("dept", "xyz"))))
+    pipeline.process(EventInternal(LocalDateTime.now(), Seq(EventAttribute("seqNo", "3"), EventAttribute("id", 3), EventAttribute("name", "susan"), EventAttribute("dept", "abc"))))
+    pipeline.process(EventInternal(LocalDateTime.now(), Seq(EventAttribute("seqNo", "4"), EventAttribute("id", 4), EventAttribute("name", "james"), EventAttribute("dept", "klm"))))
+    pipeline.process(EventInternal(LocalDateTime.now(), Seq(EventAttribute("seqNo", "5"), EventAttribute("id", 4), EventAttribute("name", "james"), EventAttribute("dept", "klm"))))
+
+
+    Thread.sleep(5000)
+    pipeline.shutdown
+    Thread.sleep(1000)
+    println(s"pipeline is now shutdown - ${!pipeline.isActive}")
+
   }
 }

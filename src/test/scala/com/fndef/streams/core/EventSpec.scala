@@ -1,5 +1,7 @@
 package com.fndef.streams.core
 
+import java.time.LocalDateTime
+
 import com.fndef.streams.core
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -96,7 +98,7 @@ class EventSpec extends AnyFlatSpec with Matchers {
     val name: EventAttribute = EventAttribute("name", "James")
     val country: EventAttribute = EventAttribute("country", "USA")
 
-    val eventInternal: EventInternal = EventInternal(Seq(name, country))
+    val eventInternal: EventInternal = EventInternal(LocalDateTime.now(), Seq(name, country))
     assert(eventInternal.eventType == DataEventType, "Event type is incorrect")
     assert(eventInternal.containsAttribute(name.name), "Attribute is missing")
     assert(eventInternal.containsAttribute(country.name), "Attribute is missing")
@@ -110,7 +112,7 @@ class EventSpec extends AnyFlatSpec with Matchers {
     val host: EventAttribute = EventAttribute("host", "localhost")
     val port: EventAttribute = EventAttribute("port", 8090)
 
-    val eventInternal: EventInternal = EventInternal(ConfigUpdateType, Seq(host, port))
+    val eventInternal: EventInternal = EventInternal(ConfigUpdateType, LocalDateTime.now(), Seq(host, port))
     assert(eventInternal.eventType == ConfigUpdateType, "Event type is incorrect")
     assert(eventInternal.containsAttribute(host.name), "Attribute is missing")
     assert(eventInternal.containsAttribute(port.name), "Attribute is missing")
@@ -123,7 +125,7 @@ class EventSpec extends AnyFlatSpec with Matchers {
   "Event Internal " should " get created for admin event type" in {
     val adminAction: EventAttribute = EventAttribute("action", "createAction")
 
-    val eventInternal: EventInternal = EventInternal(AdminEventType, Seq(adminAction))
+    val eventInternal: EventInternal = EventInternal(AdminEventType, LocalDateTime.now(), Seq(adminAction))
     assert(eventInternal.eventType == AdminEventType, "Event type is incorrect")
     assert(eventInternal.containsAttribute(adminAction.name), "Attribute is missing")
     assert((eventInternal.attributeNames == Set(adminAction.name)), "Attribute names are not correct")
@@ -134,11 +136,11 @@ class EventSpec extends AnyFlatSpec with Matchers {
   "Event internal with same event type and attributes" should "be equal" in {
     val name1: EventAttribute = EventAttribute("name", "James")
     val country1: EventAttribute = EventAttribute("country", "USA")
-    val eventInternal1: EventInternal = EventInternal(Seq(name1, country1))
+    val eventInternal1: EventInternal = EventInternal(LocalDateTime.now(), Seq(name1, country1))
 
     val name2: EventAttribute = EventAttribute("name", "James")
     val country2: EventAttribute = EventAttribute("country", "USA")
-    val eventInternal2: EventInternal = EventInternal(Seq(name2, country2))
+    val eventInternal2: EventInternal = EventInternal(LocalDateTime.now(), Seq(name2, country2))
 
     assert(eventInternal1.eventType == DataEventType, "Incorrect event type")
     assert(eventInternal2.eventType == DataEventType, "Incorrect event type")
@@ -150,11 +152,11 @@ class EventSpec extends AnyFlatSpec with Matchers {
   "Event internal with same event type but different attributes" should "not be equal" in {
     val name1: EventAttribute = EventAttribute("name1", "James")
     val country1: EventAttribute = EventAttribute("country1", "USA")
-    val eventInternal1: EventInternal = EventInternal(Seq(name1, country1))
+    val eventInternal1: EventInternal = EventInternal(LocalDateTime.now(), Seq(name1, country1))
 
     val name2: EventAttribute = EventAttribute("name2", "James")
     val country2: EventAttribute = EventAttribute("country2", "USA")
-    val eventInternal2: EventInternal = EventInternal(Seq(name2, country2))
+    val eventInternal2: EventInternal = EventInternal(LocalDateTime.now(), Seq(name2, country2))
 
     assert(eventInternal1.eventType == DataEventType, "Incorrect event type")
     assert(eventInternal2.eventType == DataEventType, "Incorrect event type")
@@ -166,11 +168,11 @@ class EventSpec extends AnyFlatSpec with Matchers {
   "Event internal with same attributes but different event types" should "not be equal" in {
     val name1: EventAttribute = EventAttribute("name", "James")
     val country1: EventAttribute = EventAttribute("country", "USA")
-    val eventInternal1: EventInternal = EventInternal(DataEventType, Seq(name1, country1))
+    val eventInternal1: EventInternal = EventInternal(DataEventType, LocalDateTime.now(), Seq(name1, country1))
 
     val name2: EventAttribute = EventAttribute("name", "James")
     val country2: EventAttribute = EventAttribute("country", "USA")
-    val eventInternal2: EventInternal = EventInternal(ConfigUpdateType, Seq(name2, country2))
+    val eventInternal2: EventInternal = EventInternal(ConfigUpdateType, LocalDateTime.now(), Seq(name2, country2))
 
     assert(eventInternal1.eventType == DataEventType, "Incorrect event type")
     assert(eventInternal2.eventType == ConfigUpdateType, "Incorrect event type")
@@ -181,20 +183,20 @@ class EventSpec extends AnyFlatSpec with Matchers {
 
   "Event internal with missing event type" should "not be created" in {
     val name1: EventAttribute = EventAttribute("name", "James")
-    assertThrows[IllegalArgumentException](EventInternal(null, Seq(name1)))
+    assertThrows[IllegalArgumentException](EventInternal(null, LocalDateTime.now(), Seq(name1)))
   }
 
   "Event internal with null event attributes" should "not be created" in {
-    assertThrows[IllegalArgumentException](EventInternal(ConfigUpdateType, null))
+    assertThrows[IllegalArgumentException](EventInternal(ConfigUpdateType, LocalDateTime.now(), null))
   }
 
   "Event internal with no event attributes" should "not be created" in {
-    assertThrows[IllegalArgumentException](EventInternal(AdminEventType, Seq()))
+    assertThrows[IllegalArgumentException](EventInternal(AdminEventType, LocalDateTime.now(), Seq()))
   }
 
   "Event internal with some non-null and some null event attributes" should "not be created" in {
     val name1: EventAttribute = EventAttribute("name", "James")
-    assertThrows[IllegalArgumentException](EventInternal(DataEventType, Seq(name1, null)))
+    assertThrows[IllegalArgumentException](EventInternal(DataEventType, LocalDateTime.now(), Seq(name1, null)))
   }
 
   "Event and event internal with the same attributes" should "not be equal" in {

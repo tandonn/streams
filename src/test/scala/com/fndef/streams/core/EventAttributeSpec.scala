@@ -6,6 +6,7 @@ import org.scalatest.flatspec._
 import org.scalatest.matchers.should.Matchers
 
 class EventAttributeSpec extends AnyFlatSpec with Matchers {
+  /*
   "A byte attribute" should "have byte value" in {
     val attr: EventAttribute = EventAttribute("attr", 5.toByte)
     assert(attr.isInstanceOf[ByteAttribute], "Attribute is not byte attribute")
@@ -33,6 +34,8 @@ class EventAttributeSpec extends AnyFlatSpec with Matchers {
     assert(attr.value == 10, "Incorrect attribute value")
   }
 
+   */
+
   "A long attribute" should "have long value" in {
     val attr: EventAttribute = EventAttribute("attr", 100L)
     assert(attr.isInstanceOf[LongAttribute], "Attribute is not long attribute")
@@ -42,6 +45,7 @@ class EventAttributeSpec extends AnyFlatSpec with Matchers {
     assert(attr.value == 100L, "Incorrect attribute value")
   }
 
+  /*
   "A float attribute" should "have float value" in {
     val attr: EventAttribute = EventAttribute("attr", 100.12f)
     assert(attr.isInstanceOf[FloatAttribute], "Attribute is not float attribute")
@@ -50,6 +54,7 @@ class EventAttributeSpec extends AnyFlatSpec with Matchers {
     assert(attr.value.isInstanceOf[Float], "Attribute is not float")
     assert(attr.value == 100.12f, "Incorrect attribute value")
   }
+   */
 
   "A double attribute" should "have double value" in {
     val attr: EventAttribute = EventAttribute("attr", 100.12d)

@@ -5,7 +5,7 @@ import java.util.UUID
 
 object Implicits {
 
-  implicit val processingContext: ProcessingContext = ProcessingContext()
+  // implicit val processingContext: ProcessingContext = ProcessingContext()
   implicit def toByte(eventAttribute: EventAttribute): Byte = eventAttribute.value.asInstanceOf[Byte]
   implicit def toShort(eventAttribute: EventAttribute): Short = eventAttribute.value.asInstanceOf[Short]
   implicit def toInt(eventAttribute: EventAttribute): Int = eventAttribute.value.asInstanceOf[Int]

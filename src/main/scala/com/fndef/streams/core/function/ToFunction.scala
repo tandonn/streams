@@ -1,20 +1,18 @@
 package com.fndef.streams.core.function
 
-import com.fndef.streams
-import com.fndef.streams.core.{EventInternal, ProcessingContext, StreamFunction, StreamSink}
+import com.fndef.streams.core.{EventBatch, EventInternal, Sink, StreamFunction, StreamPacket}
 
-class ToFunction(val name: String, sinks: Seq[StreamSink]) extends StreamFunction {
-  streams.registerSinks(this)(sinks:_*)
+class ToFunction(val name: String, pipeline: Pipeline) extends StreamFunction {
+  override def process(data: StreamPacket): Unit = {
+    def publishEvents(events: Seq[EventInternal], sink: Sink[EventInternal]): Unit = {
+      events.foreach(sink.process(_))
+    }
 
-  override def processInternal(event: EventInternal)(implicit context: ProcessingContext): Option[EventInternal] = {
-    println(s"to event = ${event}")
-    Option(event)
-  }
-
-}
-
-object ToFunction {
-  def apply(name: String, sinks: StreamSink*): ToFunction = {
-    new ToFunction(name, sinks)
+    data match {
+      case EventBatch(_, events) =>
+        pipeline.sinks.foreach(publishEvents(events, _))
+      case _ =>
+        // other type of events
+    }
   }
 }
