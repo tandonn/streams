@@ -14,8 +14,8 @@ object TestStub {
       .select("id", "name", "dept", "count(name)", "max(id)")
       .literals(lit(5), lit("test").as("hello-test"))
       // .strictGrouping(true)
-      .filter(filterOf("name").equalTo(lit("james")))
-      .having(filterOf("count(name)").greaterThanEqual(lit(2)))
+      .filter(filterOf("name").equalTo(lit("james")).or(filterOf("name").equalTo(lit("susan"))))
+      .having(filterOf("count(name)").greaterThanEqual(lit(1)))
       .groupBy("name", "dept")
       .start
 
@@ -32,7 +32,7 @@ object TestStub {
     pipeline.process(EventInternal(LocalDateTime.now(), Seq(EventAttribute("seqNo", "5"), EventAttribute("id", 4), EventAttribute("name", "james"), EventAttribute("dept", "klm"))))
 
 
-    Thread.sleep(5000)
+    Thread.sleep(7000)
     pipeline.shutdown
     Thread.sleep(1000)
     println(s"pipeline is now shutdown - ${!pipeline.isActive}")

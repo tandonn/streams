@@ -31,7 +31,7 @@ package object streams {
   }
 
   def windowOf(duration: Duration): WindowSpec = {
-    WindowSpec("", DateTimeFormatter.ISO_LOCAL_DATE_TIME, duration, duration, duration.multipliedBy(50), true)
+    WindowSpec("", DateTimeFormatter.ISO_LOCAL_DATE_TIME, duration, duration, duration.multipliedBy(3), true)
   }
 
   case class WindowSpec(timeAttribute: String, timeFormat: DateTimeFormatter, windowDuration: Duration, slideBy: Duration, expireBy: Duration, internalTime: Boolean) {
