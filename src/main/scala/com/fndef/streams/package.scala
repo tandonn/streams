@@ -4,7 +4,7 @@ import java.time.Duration
 import java.time.format.DateTimeFormatter
 
 import com.fndef.streams.core.EventAttribute
-import com.fndef.streams.core.operation.{AggregateOp, AndFilter, AttributeOp, EqualFilter, EventAttributeResolver, FilterAttributeResolver, FilterOp, GreaterThan, GreaterThanEqual, IsNullFilter, LessThan, LessThanEqual, LiteralOp, LiteralResolver, NoFilter, NotEqualFilter, NotFilter, NotNullFilter, OrFilter, SelectOp}
+import com.fndef.streams.core.operation.{AggregateOp, AndFilter, AttributeOp, EqualFilter, EventAttributeResolver, FilterAttributeResolver, FilterOp, GreaterThan, GreaterThanEqual, IsNullFilter, LessThan, LessThanEqual, LiteralOp, LiteralResolver, NoFilter, NotEqualFilter, NotFilter, NotNullFilter, OrFilter, SelectOp, SortAsc, SortDesc, SortOp}
 import com.fndef.streams.core.function.{Pipeline, WindowedPipeline}
 
 
@@ -193,38 +193,67 @@ package object streams {
                           having: Seq[FilterOp] = Seq(),
                           literals: Seq[EventAttribute] = Seq(),
                           aggregations: Seq[AggregateOp] = Seq(),
+                          sorting: Seq[SortOp] = Seq(),
+                          fetchCount: Int = -1,
                           applyStrictGrouping: Boolean = false) {
 
 
     def windowBy(spec: WindowSpec): PipelineSpec = {
-      PipelineSpec(pipelineName, spec, selections, filters, grouping, having, literals, aggregations, applyStrictGrouping)
+      PipelineSpec(pipelineName, spec, selections, filters, grouping, having, literals, aggregations, sorting, fetchCount, applyStrictGrouping)
     }
 
     def select(attributes: String*): PipelineSpec = {
-      PipelineSpec(pipelineName, windowSpec, mergeSelections(attributes), filters, grouping, having, literals, mergeAgg(attributes), applyStrictGrouping)
+      PipelineSpec(pipelineName, windowSpec, mergeSelections(attributes), filters, grouping, having, literals, mergeAgg(attributes), sorting, fetchCount, applyStrictGrouping)
     }
 
     def literals(lits: EventAttribute*): PipelineSpec = {
-      PipelineSpec(pipelineName, windowSpec, selections, filters, grouping, having, mergeLiterals(lits), aggregations, applyStrictGrouping)
+      PipelineSpec(pipelineName, windowSpec, selections, filters, grouping, having, mergeLiterals(lits), aggregations, sorting, fetchCount, applyStrictGrouping)
     }
 
     def filter(filterSpecs: FilterSpec*): PipelineSpec = {
-      PipelineSpec(pipelineName, windowSpec, selections, mergeFilters(filters, filterSpecs), grouping, having, literals, aggregations, applyStrictGrouping)
+      PipelineSpec(pipelineName, windowSpec, selections, mergeFilters(filters, filterSpecs), grouping, having, literals, aggregations, sorting, fetchCount, applyStrictGrouping)
     }
 
     def groupBy(attributes: String*): PipelineSpec = {
       val aggregationAttrs: Seq[String] = attributes.filter(AggregateOp.isAggregation(_)).map(AggregateOp(_).opName)
       val namedAttrs: Seq[String] = attributes.filterNot(AggregateOp.isAggregation(_))
 
-      PipelineSpec(pipelineName, windowSpec, selections, filters, (aggregationAttrs.map(SelectOp(_)) ++ namedAttrs.map(SelectOp(_))), having, literals, aggregations, applyStrictGrouping)
+      PipelineSpec(pipelineName, windowSpec, selections, filters, (aggregationAttrs.map(SelectOp(_)) ++ namedAttrs.map(SelectOp(_))), having, literals, aggregations, sorting, fetchCount, applyStrictGrouping)
     }
 
     def having(attributes: FilterSpec*): PipelineSpec = {
-      PipelineSpec(pipelineName, windowSpec, selections, filters, grouping, mergeFilters(having, attributes), literals, mergeAgg(attributes.flatMap(_.attributes)), applyStrictGrouping)
+      PipelineSpec(pipelineName, windowSpec, selections, filters, grouping, mergeFilters(having, attributes), literals, mergeAgg(attributes.flatMap(_.attributes)), sorting, fetchCount, applyStrictGrouping)
+    }
+
+    def sortBy(sortAttrs: SortOp*): PipelineSpec = {
+      val sortOps = sortAttrs.filterNot(s => sorting.map(_.attributeOp.attributeName).contains(s.attributeOp.attributeName))
+      PipelineSpec(pipelineName, windowSpec, selections, filters, grouping, having, literals, aggregations, (sorting ++ sortOps), fetchCount, applyStrictGrouping)
+    }
+
+    private[this] def attrOp(raw: String): AttributeOp = {
+      if (AggregateOp.isAggregation(raw)) {
+        SelectOp(AggregateOp(raw).opName)
+      } else {
+        SelectOp(raw)
+      }
+    }
+
+    def sortAsc(attrs: String*): PipelineSpec = {
+      val sortOps = attrs.map(a => SortOp(attrOp(a), SortAsc)).filterNot(s => sorting.map(_.attributeOp.attributeName).contains(s.attributeOp.attributeName))
+        PipelineSpec(pipelineName, windowSpec, selections, filters, grouping, having, literals, aggregations, (sorting ++ sortOps), fetchCount, applyStrictGrouping)
+    }
+
+    def sortDesc(attrs: String*): PipelineSpec = {
+      val sortOps = attrs.map(a => SortOp(attrOp(a), SortDesc)).filterNot(s => sorting.map(_.attributeOp.attributeName).contains(s.attributeOp.attributeName))
+      PipelineSpec(pipelineName, windowSpec, selections, filters, grouping, having, literals, aggregations, (sorting ++ sortOps), fetchCount, applyStrictGrouping)
+    }
+
+    def limit(count: Int): PipelineSpec = {
+      PipelineSpec(pipelineName, windowSpec, selections, filters, grouping, having, literals, aggregations, sorting, count, applyStrictGrouping)
     }
 
     def strictGrouping(strict: Boolean): PipelineSpec = {
-      PipelineSpec(pipelineName, windowSpec, selections, filters, grouping, having, literals, aggregations, strict)
+      PipelineSpec(pipelineName, windowSpec, selections, filters, grouping, having, literals, aggregations, sorting, fetchCount, strict)
     }
 
     def start: Pipeline = {

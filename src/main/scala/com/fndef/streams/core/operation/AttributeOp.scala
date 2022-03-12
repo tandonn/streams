@@ -56,7 +56,7 @@ object AggregateOp {
 
 case class CountOp(attributeName: String) extends AggregateOp {
   val aggregationName: String = "count"
-  val opName: String = s"${aggregationName}(${attributeName})"
+  val opName: String = s"${aggregationName}(${attributeName.trim})"
   override def op(eventInternal: EventInternal)(implicit context: ProcessingContext): EventAttribute = {
     eventInternal.getAttribute(attributeName) match {
       case Some(_) =>
@@ -70,7 +70,7 @@ case class CountOp(attributeName: String) extends AggregateOp {
 
 case class SumOp(attributeName: String) extends AggregateOp {
   val aggregationName: String = "sum"
-  val opName: String = s"${aggregationName}(${attributeName})"
+  val opName: String = s"${aggregationName}(${attributeName.trim})"
 
   override def op(eventInternal: EventInternal)(implicit context: ProcessingContext): EventAttribute = {
     eventInternal.getAttribute(attributeName) match {
@@ -85,7 +85,7 @@ case class SumOp(attributeName: String) extends AggregateOp {
 
 case class AvgOp(attributeName: String) extends AggregateOp {
   override val aggregationName: String = "avg"
-  val opName: String = s"${aggregationName}(${attributeName})"
+  val opName: String = s"${aggregationName}(${attributeName.trim})"
 
   override def op(eventInternal: EventInternal)(implicit context: ProcessingContext): EventAttribute = {
     eventInternal.getAttribute(attributeName) match {
@@ -102,7 +102,7 @@ case class AvgOp(attributeName: String) extends AggregateOp {
 
 case class MaxOp(attributeName: String) extends AggregateOp {
   val aggregationName: String = "max"
-  val opName: String = s"${aggregationName}(${attributeName})"
+  val opName: String = s"${aggregationName}(${attributeName.trim})"
 
   override def op(eventInternal: EventInternal)(implicit context: ProcessingContext): EventAttribute = {
     val contextVal: Option[EventAttribute] = context.groupingContext.getAttribute(eventInternal, opName)
@@ -129,7 +129,7 @@ case class MaxOp(attributeName: String) extends AggregateOp {
 
 case class MinOp(attributeName: String) extends AggregateOp {
   val aggregationName: String = "min"
-  val opName: String = s"${aggregationName}(${attributeName})"
+  val opName: String = s"${aggregationName}(${attributeName.trim})"
   override def op(eventInternal: EventInternal)(implicit context: ProcessingContext): EventAttribute = {
     val contextVal: Option[EventAttribute] = context.groupingContext.getAttribute(eventInternal, attributeName)
     val eventVal: Option[EventAttribute] = eventInternal.getAttribute(attributeName)

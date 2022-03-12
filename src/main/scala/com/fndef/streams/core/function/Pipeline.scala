@@ -27,7 +27,7 @@ class WindowedPipeline(spec: PipelineSpec) extends Pipeline {
   }
 
   private def pipelineFunctions: StreamFunction = {
-    registerPipelineFunctions(createFilter, createGrouping, createHavingFilter, createSelect, createToFunction)
+    registerPipelineFunctions(createFilter, createGrouping, createHavingFilter, createSort, createLimit, createSelect, createToFunction)
   }
 
   private def createGrouping: GroupFunction = {
@@ -36,6 +36,14 @@ class WindowedPipeline(spec: PipelineSpec) extends Pipeline {
 
   private def createSelect: SelectFunction = {
     new SelectFunction(s"${spec.pipelineName}-select", spec)
+  }
+
+  private def createSort: SortFunction = {
+    new SortFunction(s"${spec.pipelineName}-sort", spec)
+  }
+
+  private def createLimit: LimitFunction = {
+    new LimitFunction(s"${spec.pipelineName}-limit", spec)
   }
 
   private def createHavingFilter: FilterFunction = {

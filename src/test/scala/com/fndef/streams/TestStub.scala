@@ -17,6 +17,9 @@ object TestStub {
       .filter(filterOf("name").equalTo(lit("james")).or(filterOf("name").equalTo(lit("susan"))))
       .having(filterOf("count(name)").greaterThanEqual(lit(1)))
       .groupBy("name", "dept")
+      .sortAsc("name")
+      .sortDesc("count( name)")
+      .limit(3)
       .start
 
     pipeline.registerSink(new PipelineSink {
