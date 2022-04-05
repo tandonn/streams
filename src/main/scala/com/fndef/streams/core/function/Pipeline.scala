@@ -1,5 +1,7 @@
 package com.fndef.streams.core.function
 
+import java.util.UUID
+
 import com.fndef.streams.PipelineSpec
 import com.fndef.streams.core.{EventInternal, PipelineSink, PipelineSource, Startable, StreamFunction, StreamSink}
 import com.fndef.streams.core.store.{IndexedStreamStore, StreamStore}
@@ -7,6 +9,7 @@ import com.fndef.streams.core.store.{IndexedStreamStore, StreamStore}
 trait Pipeline extends PipelineSource with PipelineSink with Startable
 
 class WindowedPipeline(spec: PipelineSpec) extends Pipeline {
+  val id: String = UUID.randomUUID().toString
   val name: String = s"${spec.pipelineName}"
   private[this] val streamStore: StreamStore = createStreamStore(pipelineFunctions)
 

@@ -9,11 +9,15 @@ trait Sink[-T] {
   def process(data: T): Unit
 }
 
-trait PipelineSink extends Sink[EventInternal] {
+trait IdentifiableSink[-T] extends Sink[T] with Identifiable {
+  def process(data: T): Unit
+}
+
+trait PipelineSink extends IdentifiableSink[EventInternal] {
   def process(data: EventInternal): Unit
 }
 
-trait StreamSink extends Sink[StreamPacket] {
+trait StreamSink extends IdentifiableSink[StreamPacket] {
   def process(data: StreamPacket): Unit
 }
 

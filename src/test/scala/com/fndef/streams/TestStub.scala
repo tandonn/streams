@@ -1,6 +1,7 @@
 package com.fndef.streams
 
 import java.time.{Duration, LocalDateTime}
+import java.util.UUID
 
 import com.fndef.streams.core.{EventAttribute, EventInternal, PipelineSink}
 
@@ -23,6 +24,7 @@ object TestStub {
       .start
 
     pipeline.registerSink(new PipelineSink {
+      val id = UUID.randomUUID().toString
       override def process(data: EventInternal): Unit = {
         println(s"downstream :: received event : ${data}")
       }
